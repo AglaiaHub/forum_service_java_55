@@ -55,7 +55,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         if(isAddRole){
             userAccount.addRole(role);
         } else {
-            userAccount.removeRole(role);
+            if(!role.equalsIgnoreCase("user")){
+                userAccount.removeRole(role);
+            }
         }
 
         userAccount = userAccountRepository.save(userAccount);
