@@ -5,6 +5,8 @@ import java55.forum_service_mongoDb.accounting.dto.RolesDto;
 import java55.forum_service_mongoDb.accounting.dto.UserDto;
 import java55.forum_service_mongoDb.accounting.dto.UserEditDto;
 import java55.forum_service_mongoDb.accounting.dto.UserRegisterDto;
+import java55.forum_service_mongoDb.accounting.dto.exception.UserExistException;
+import java55.forum_service_mongoDb.accounting.dto.exception.UserNotFoundException;
 import java55.forum_service_mongoDb.accounting.model.Role;
 import java55.forum_service_mongoDb.accounting.model.UserAccount;
 import java55.forum_service_mongoDb.post.dto.exceptions.PostNotFoundException;
@@ -20,6 +22,9 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public UserDto register(UserRegisterDto userRegisterDto) {
+        if (userAccountRepository.existsById(userRegisterDto.getLogin())) {
+            throw new UserExistException();
+        }
         UserAccount userAccount = new UserAccount(userRegisterDto.getLogin(), userRegisterDto.getPassword(), userRegisterDto.getFirstName(), userRegisterDto.getLastName());
         userAccount = userAccountRepository.save(userAccount);
         return modelMapper.map(userAccount, UserDto.class);
@@ -27,46 +32,48 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public UserDto removeUser(String login) {
-        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(PostNotFoundException::new);
+        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
         userAccountRepository.delete(userAccount);
         return modelMapper.map(userAccount, UserDto.class);
     }
 
     @Override
     public UserDto getUser(String login) {
-        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(PostNotFoundException::new);
+        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
         return modelMapper.map(userAccount, UserDto.class);
     }
 
     @Override
     public UserDto updateUser(String login, UserEditDto userEditDto) {
-        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(PostNotFoundException::new);
-        if(userEditDto.getFirstName()!=null) userAccount.setFirstName(userEditDto.getFirstName());
-        if(userEditDto.getLastName()!=null) userAccount.setLastName(userEditDto.getLastName());
+        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+        if (userEditDto.getFirstName() != null) userAccount.setFirstName(userEditDto.getFirstName());
+        if (userEditDto.getLastName() != null) userAccount.setLastName(userEditDto.getLastName());
         userAccount = userAccountRepository.save(userAccount);
         return modelMapper.map(userAccount, UserDto.class);
     }
 
     @Override
     public RolesDto changeRolesList(String login, String role, boolean isAddRole) {
-        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(PostNotFoundException::new);
+        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+        boolean res = false;
 
-
-        if(isAddRole){
-            userAccount.addRole(role);
+        if (isAddRole) {
+            res = userAccount.addRole(role);
         } else {
-            if(!role.equalsIgnoreCase("user")){
-                userAccount.removeRole(role);
-            }
+            res = userAccount.removeRole(role);
         }
 
-        userAccount = userAccountRepository.save(userAccount);
+        if (res) {
+            userAccount = userAccountRepository.save(userAccount);
+        }
+
         return modelMapper.map(userAccount, RolesDto.class);
     }
 
     @Override
-    public void changePassword(String name, String newPassword) {
-        // mistake? why by name, not by login?
-
+    public void changePassword(String login, String newPassword) {
+        UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+        userAccount.setPassword(newPassword);
+        userAccountRepository.save(userAccount);
     }
 }
