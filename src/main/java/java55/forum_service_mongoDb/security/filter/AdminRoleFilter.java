@@ -31,6 +31,7 @@ public class AdminRoleFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
         HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
 
         UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).orElseThrow(UserNotFoundException::new);
         Set roles = userAccount.getRoles();
@@ -49,7 +50,7 @@ public class AdminRoleFilter implements Filter {
             }
         }
 
-        filterChain.doFilter(servletRequest, servletResponse);
+        filterChain.doFilter(request, response);
     }
 }
 
