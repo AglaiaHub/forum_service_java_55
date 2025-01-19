@@ -33,18 +33,21 @@ public class AdminRoleFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).orElseThrow(UserNotFoundException::new);
-        Set roles = userAccount.getRoles();
+
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
 
         if ((method.equals("PUT") || method.equals("DELETE")) && requestURI.matches("/user/.*/role/.*")) {
+            UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).orElseThrow(UserNotFoundException::new);
+            Set roles = userAccount.getRoles();
             if (!roles.equals(Role.ADMINISTRATOR)){
                 throw new NotAdministratorAccess();
             }
         }
 
         if ((method.equals("DELETE")) && requestURI.matches("/user/..")) {
+            UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).orElseThrow(UserNotFoundException::new);
+            Set roles = userAccount.getRoles();
             if (!roles.equals(Role.ADMINISTRATOR)){
                 throw new NotAdministratorAccess();
             }
