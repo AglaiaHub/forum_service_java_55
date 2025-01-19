@@ -18,5 +18,7 @@ public class ServiceConfig {
         return modelMapper;
     }
 
+    //ObjectMapper - десериализует из джейсона в объект (DTO)
+
 
 }

@@ -39,7 +39,9 @@ public class AuthenticationFilter implements Filter {
                 UserAccount userAccount = userAccountRepository.findById(credentials[0])
                         .orElseThrow(RuntimeException::new);
                 System.out.println(userAccount.getPassword());
-                if (!BCrypt.verifyer().verify(credentials[1].toCharArray(), userAccount.getPassword().toCharArray()).verified) {
+                String passwordFromReq = credentials[1];
+                String passwordFromDB = userAccount.getPassword();
+                if (!BCrypt.verifyer().verify(passwordFromReq.toCharArray(), passwordFromDB.toCharArray()).verified) {
                     throw new RuntimeException();
                 }
                 request = new WrappedRequest(request, userAccount.getLogin());

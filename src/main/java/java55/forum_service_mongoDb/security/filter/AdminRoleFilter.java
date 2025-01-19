@@ -3,14 +3,21 @@ package java55.forum_service_mongoDb.security.filter;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java55.forum_service_mongoDb.accounting.dao.UserAccountRepository;
+import java55.forum_service_mongoDb.accounting.dto.exception.UserExistException;
+import java55.forum_service_mongoDb.accounting.dto.exception.UserNotFoundException;
+import java55.forum_service_mongoDb.accounting.model.Role;
 import java55.forum_service_mongoDb.accounting.model.UserAccount;
+import java55.forum_service_mongoDb.security.filter.exceptions.NotAdministratorAccess;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -22,9 +29,27 @@ public class AdminRoleFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-//        HttpServletRequest request = (HttpServletRequest) req;
-//        HttpServletResponse response = (HttpServletResponse) resp;
-//        chain.doFilter(request, response);
+
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+
+        UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).orElseThrow(UserNotFoundException::new);
+        Set roles = userAccount.getRoles();
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+
+        if ((method.equals("PUT") || method.equals("DELETE")) && requestURI.matches("/user/.*/role/.*")) {
+            if (!roles.equals(Role.ADMINISTRATOR)){
+                throw new NotAdministratorAccess();
+            }
+        }
+
+        if ((method.equals("DELETE")) && requestURI.matches("/user/..")) {
+            if (!roles.equals(Role.ADMINISTRATOR)){
+                throw new NotAdministratorAccess();
+            }
+        }
+
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 }
 
